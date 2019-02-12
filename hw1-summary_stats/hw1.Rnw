@@ -1,0 +1,149 @@
+\documentclass{article}
+\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{placeins}
+\title{HW 1}
+\author{Elizabeth Hutton}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle 
+
+\section{2.1 Conceptual}
+\begin{itemize}
+\item[a.] When n is large and p is small, there is a smaller chance that a flexible model will overfit because a large sample is more representative and having a smaller number of predictors will mean less noise. 
+\item[b.] An inflexible model will perform better on a small sample in general, and is especially the case when p is relatively large. A flexible model will not reduce the bias enough to justify the increase in variance. 
+\item[c.] If the relationship between predictors and response is nonlinear, a flexible model will perform better than an inflexible, simpler model. 
+\item[d.] An inflexible model will perform better because the large variance indicates there is noise in the data which will be overfit by a more flexible model. 
+\end{itemize}
+
+\section{2.9 Applied}
+\begin{itemize}
+\item[a.] Of the 9 variables, only \emph{name}, \emph{year}, and \emph{origin} are qualitative. The other 6 are quantitative. 
+\item[b./c.] Here are the ranges, means, and standard deviations for each of the quantitative predictors: 
+
+<<results=tex,echo =false>>=
+library(ISLR)
+library(stargazer)
+options(digits=4)
+stargazer(Auto[,1:6],title='Summary statistics for Auto data',omit.summary.stat = c("p25","p75"))
+@
+
+\item[d.] After removing the 10th through 85th samples, the ranges, means, and sd's of each predictor are:
+<<results=tex,echo =false>>=
+newData = Auto[-c(10:85),]
+options(digits=4)
+stargazer(newData[,1:6],title='Summary statistics for Auto data subset',omit.summary.stat = c("p25","p75"))
+@
+
+\item[e./f.]  The following plots reveal interesting relationships between MPG and many of the other predictors. For example, visual inspection shows that 4 Cylinder cars get higher MPG than any other and cars of American origin (denoted by 1) get worse MPG than cars made in Europe or Japan (2 and 3, respectively). It appears that almost all of the predictors have some correlation with MPG. 
+
+\begin{figure}[!hb]
+\centering
+\vspace{-10pt}
+<<fig=T,echo=F, include=true, width=4,height=4>>=
+pairs(Auto[,1:6])
+@
+\vspace{-20pt}
+\caption{Matrix Plot of Predictors}
+\vspace{-10pt}
+\end{figure}
+
+<<label=cyl,fig=true,echo=false, include=false>>=
+plot(Auto$cylinders,Auto$mpg, xlab="Cylinders", ylab="MPG")
+@
+<<label=origin,fig=true,echo=false, include=false>>=
+plot(Auto$origin,Auto$mpg, xlab="Origin", ylab="MPG")
+@
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw1-cyl}
+\caption{MPG by \# Cylinders}
+\label{fig:cyl}
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw1-origin}
+\caption{MPG by Origin}
+\label{fig:origin}
+\end{subfigure}
+\caption{MPG and Related Predictors}
+\end{figure}
+\end{itemize}
+
+\FloatBarrier
+\section{2.10 Applied}
+\begin{itemize}
+\item[a-c.] After exploring the relationship between crime per capita and the other predictors in the Boston dataset, one can see that:
+\begin{itemize}
+\item There is a lower crime rate in areas adjacent to the Charles River.
+\item Crime rate tends to increase with percent of low status population.
+\item Crime rate tends to decrease as median home value increases.
+\end{itemize}
+
+<<label=chas,echo=F,fig=T,include=F>>=
+library(MASS)
+options(digits=4)
+plot(Boston$chas, Boston$crim)
+@
+<<label=lstat,echo=F,fig=T,include=F>>=
+plot(Boston$lstat, Boston$crim)
+@
+<<label=med,echo=F,fig=T,include=F>>=
+plot(Boston$medv, Boston$crim)
+@
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw1-chas}
+\caption{Crime by Charles River (1) vs. not (0).}
+\label{fig:chas}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw1-lstat}
+\caption{Crime by low status population.}
+\label{fig:lstat}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw1-med}
+\caption{Crime by median home value.}
+\label{fig:med}
+\hfill
+\end{subfigure}
+\caption{Crime Rate and Related Predictors}
+\end{figure}
+
+\item[d.]
+\begin{itemize}
+\item The area identified in row \Sexpr{which.max(Boston$crim)} has the highest crime rate of \Sexpr{max(Boston$crim)}.
+\item Area \Sexpr{which.max(Boston$tax)} has the highest tax rate of \Sexpr{max(Boston$tax)}.
+\item Area \Sexpr{which.max(Boston$ptratio)} has the highest pupil-teacher ratio of \Sexpr{max(Boston$ptratio)}.
+\end{itemize}
+
+
+\item[e.] \Sexpr{length(which(Boston$chas==1))} areas in Boston are adjacent to the Charles River. 
+\item[f.] The median pupil-teacher ratio is \Sexpr{median(Boston$ptratio)}
+\item[g.] The \Sexpr{which.min(Boston$medv)}'th town has the lowest median value homes. 
+<<>>=
+Boston[399,]
+@
+Observations about the other predictors for this neighborhood: 
+\begin{itemize}
+\item This neighborhood has the minimum of 0\% of the residential land zoned for lots over 25,000 sq.ft. 
+\item 100\% of the buildings in this area were built before 1940. 
+\item The neighborhood is relatively close to employment centers and radial highways. 
+\item The neighborhood has the highest proportionate Black population in Boston. 
+\end{itemize}
+
+\item[h.] Number of rooms and other observations. 
+\begin{itemize}
+\item \Sexpr{length(which(Boston$rm>7))} suburbs have an average of seven rooms or more. 
+\item \Sexpr{length(which(Boston$rm>8))} suburbs have an average of eight rooms or more. 
+\item Looking at the summary statistics for the subset of neighborhoods with an average of 8 or more rooms, one can see that these neighborhoods have a higher proportionate Black population, their mean median home value lies above the average of the whole population, and they have relatively small low status populations. 
+\end{itemize}
+\end{itemize}
+\end{document}

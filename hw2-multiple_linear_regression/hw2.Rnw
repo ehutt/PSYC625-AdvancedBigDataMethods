@@ -1,0 +1,233 @@
+\documentclass{article}
+\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{placeins}
+\title{HW 2}
+\author{Elizabeth Hutton}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle 
+
+\section{3.10 Applied}
+\begin{itemize}
+\item[a.] A multiple regression model for \emph{Sales} by \emph{Price}, \emph{Urban}, and \emph{US} 
+<<echo=F>>=
+library(ISLR)
+attach(Carseats)
+lm.fit=lm(Sales~Price+Urban+US,data=Carseats)
+print(summary(lm.fit))
+b1 = round(coef(lm.fit)[2],digits=3)
+b2 = round(coef(lm.fit)[3],digits=3)
+b3 = round(coef(lm.fit)[4],digits=2)
+a = round(coef(lm.fit)[1],digits=2)
+@
+\item[b.] The negative coefficients for \emph{Price} and \emph{Urban} indicate that an increase in price or having an urban location tends decrease sales. Meanwhile, the larger, positive coefficient for \emph{US} indicates that US locations make more in sales. 
+\item[c.] The model equation can be written as $$Sales = \Sexpr{b1}Price + \Sexpr{b2}Urban + \Sexpr{b3}US + \Sexpr{a}$$
+Where 1 = yes and 0 = no for the qualitative variables \emph{Urban} and \emph{US}. 
+\item[d.] Both \emph{Price} and \emph{US} are significant predictors so we can reject the null hypothesis that their coefficients = 0. 
+\item[e.] A smaller model using only \emph{Price} and \emph{US} as predictors for \emph{Sales}: 
+<<echo=F>>=
+lm.fit1=lm(Sales~Price+US,data=Carseats)
+print(summary(lm.fit1))
+b1 = round(coef(lm.fit1)[2],digits=3)
+b2 = round(coef(lm.fit1)[3],digits=3)
+a = round(coef(lm.fit1)[1],digits=2)
+@
+\item[f.] Both models fit the data quite well, as both have p-values < 2.2e-16 and the coefficients do not change much. 
+\item[g.] 95\% confidence intervals for the coefficients in model (e) 
+<<>>= 
+confint(lm.fit1,level=0.95)
+@
+<<echo=F,fig=T,label=rstudent,include=F>>= 
+plot(predict(lm.fit1),rstudent(lm.fit1))
+@
+<<echo=F,fig=T,label=leverage,include=F>>= 
+plot(lm.fit1,which=c(5))
+@
+<<echo=F,fig=T,label=hatvals,include=F>>= 
+plot(hatvalues(lm.fit1))
+index = which.max(hatvalues(lm.fit1))
+@
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-rstudent}
+\caption{Studentized Residuals vs. Fitted Values}
+\label{fig:rstudent}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-leverage}
+\caption{Residuals vs. Leverage}
+\label{fig:leverage}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-hatvals}
+\caption{Hat Values vs. Observation}
+\label{fig:hatvals}
+\hfill
+\end{subfigure}
+\caption{Outliers and Leverage}
+\end{figure}
+\FloatBarrier
+\item[h.] From looking at the plots of residuals and rstudents, there do not appear to be any outliers as all observations lie within an rstudent value range of [-3,3]. However, the plots of leverage and hatvalues show a high leverage point in observation \Sexpr{index}. 
+\end{itemize}
+
+\section{3.15 Applied}
+<<fig=T, echo=F, include=F, label=chas>>= 
+library(MASS)
+attach(Boston)
+lm.fit3 = lm(crim~chas) #not good fit, categorical 
+plot(chas,crim)
+abline(lm.fit3)
+@
+<<fig=T, echo=F, include=F, label=lstat>>= 
+lm.fit12 = lm(crim~lstat) #better, but not totally linear 
+plot(lstat,crim)
+abline(lm.fit12)
+@
+<<fig=T, echo=F, include=F, label=medv>>= 
+lm.fit13 = lm(crim~medv) #better, but more quadratic than linear 
+plot(medv,crim)
+abline(lm.fit13)
+@
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-chas}
+\caption{Charles River}
+\label{fig:chas}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-lstat}
+\caption{Low Status Pop.}
+\label{fig:lstat}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\includegraphics[width=\textwidth]{hw2-medv}
+\caption{Median Home Value}
+\label{fig:medv}
+\hfill
+\end{subfigure}
+\caption{Crime Rate vs. Predictors}
+\end{figure}
+\FloatBarrier
+\begin{itemize}
+\item[a.] Plots of crime rate vs. individual predictors indicate that there is a significant relationship to features like \emph{lstat} (percent low status population) and \emph{medv} (median home value). However, none of the predictors have a clear linear relationship to crime rate, so the simple linear regression models don't fit the data well. Additionally, some predictors are categorical or qualitative (e.g. \emph{chas} which is a boolean indicating whether the area is next to the Charles river), so regression models fail to capture the trend. 
+<<echo=F,fig=T,label=models,include=F>>= 
+#univariate models 
+lm.fit1 = lm(crim~zn) 
+lm.fit2 = lm(crim~indus) 
+lm.fit3 = lm(crim~chas) 
+lm.fit4 = lm(crim~nox) 
+lm.fit5 = lm(crim~rm) 
+lm.fit6 = lm(crim~age)
+lm.fit7 = lm(crim~dis)
+lm.fit8 = lm(crim~rad) 
+lm.fit9 = lm(crim~tax)
+lm.fit10 = lm(crim~ptratio) 
+lm.fit11 = lm(crim~black) 
+lm.fit12 = lm(crim~lstat) 
+lm.fit13 = lm(crim~medv) 
+
+uni = c(coef(lm.fit1)[2], coef(lm.fit2)[2], coef(lm.fit3)[2],coef(lm.fit4)[2],coef(lm.fit5)[2],coef(lm.fit6)[2],
+        coef(lm.fit7)[2],coef(lm.fit8)[2],coef(lm.fit9)[2],coef(lm.fit10)[2],coef(lm.fit11)[2],coef(lm.fit12)[2],
+        coef(lm.fit13)[2]) 
+
+#multivriate model 
+lm.fit = lm(crim~.,data=Boston)
+multi = coef(lm.fit)[2:14]
+
+plot(uni,multi)
+@
+\item[b.] Aside from one outlying predictor, the coefficients of the predictors from the uni- and multi- variate models are very similar. 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{hw2-models}
+\caption{Comparison of Univariate and Multivariate Coefficients}
+\label{fig:chas}
+\end{figure}
+\FloatBarrier
+\item[c.] Incomplete
+\end{itemize}
+
+\section{4.10 Applied}
+\begin{itemize}
+\item[a.] From the correlation matrix of predictors, there only seems to be a large positive correlation between \emph{Year} and \emph{Volume}, which has a value of 0.842. Plotting \emph{Year} vs. \emph{Volume} one can clearly see the increasing trend. 
+<<echo=F,fig=T,label=volume>>=
+attach(Weekly)
+print(cor(Weekly[-9]))
+plot(Year,Volume)
+@
+
+\item[b.] The only significant predictor from the logistic regression model is \emph{Lag2} with a p-value of 0.0296. 
+<<echo=F>>=
+glm.fit = glm(Direction~Lag1+Lag2+Lag3+Lag4+Lag5+Volume, data = Weekly,family=binomial)
+print(summary(glm.fit))
+@
+
+\item[c.] The model severely overestimates the number of days when the market has gone "Up" vs. "Down," predicting "Up" 90\% of the time when it is only "Up" 55\% of the time in the data. The overall ratio of correct predictions is $0.56$.  Since the model is only correct about half the time and there is about an equal number of "Up" and "Down" days in the data, the model is performaing at chance. However, based on the chosen cutoff of $0.5$, the model is biased to predict "Up" most of the time, as seen in the confusion matrix. 
+<<echo=F>>=
+n = 1089 
+glm.probs =predict (glm.fit ,type ="response")
+glm.pred=rep ("Down" ,n)
+glm.pred[glm.probs >.5]="Up"
+table(glm.pred,Direction)
+correct = (557 + 54)/n
+model_up = sum(glm.probs>0.5)/n
+actual_up = sum(Direction=="Up")/n
+@
+
+\item[d.] The model $Direction ~ Lag2$ makes correct predictions on the test set (years 2008-2010) only 55\% of the time. The confusion matrix for the test data can be found below. 
+<<echo=F>>=
+train = (Year < 2008)
+Weekly.test= Weekly[!train,]
+Direction.test = Direction[!train]
+glm.fit2=glm(Direction ~ Lag2,data=Weekly,family =binomial,subset =train )
+glm.probs2 =predict(glm.fit2,Weekly.test, type="response")
+glm.pred2=rep("Down" ,dim(Weekly.test)[1])
+glm.pred2[glm.probs2>.5]="Up"
+table(glm.pred2,Direction.test)
+correct = mean(glm.pred2==Direction.test)
+@
+\item[e.] LDA produces nearly identical performance to logistic regression, correctly predicting test data with 55\% accuracy and overestimating the number of days the market goes "Up."
+<<echo=F>>=
+lda.fit=lda(Direction~Lag2 ,data=Weekly ,subset=train)
+lda.pred=predict(lda.fit,Weekly.test)
+lda.class=lda.pred$class
+table(lda.class,Direction.test)
+mean(lda.class == Direction.test)
+@
+
+\item[f.] QDA performs even more poorly than LDA or logistic regression. It correctly predicts only 54\% of the test data and \emph{never} predicts "Down." 
+<<echo=F>>=
+qda.fit=qda(Direction~Lag2 ,data=Weekly ,subset=train)
+qda.pred=predict(qda.fit,Weekly.test)
+qda.class=qda.pred$class
+table(qda.class,Direction.test)
+mean(qda.class == Direction.test)
+@
+
+\item[g.] Using KNN with $K=1$ correctly predicts the test data 50\% of the time, and has a more even distribution of "Up" vs. "Down" predictions (see confusion matrix). 
+<<echo=F>>=
+library(class)
+train.X = Lag2[train]
+train.Direction=Direction[train]
+test.X = Lag2[!train]
+
+set.seed(1)
+knn.pred=knn(data.frame(train.X),data.frame(test.X),train.Direction,k=1)
+table(knn.pred,Direction.test)
+correct = (32+46)/length(test.X)
+@
+
+\item[h.] Even though the correct prediction rate is smaller, the KNN model predicts "Up" almost as often as "Down" which is more consistent with the data. 
+\item[i.] Incomplete. 
+\end{itemize}
+\end{document}

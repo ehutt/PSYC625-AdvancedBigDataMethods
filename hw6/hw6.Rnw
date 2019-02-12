@@ -1,0 +1,129 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{placeins}
+\title{HW 6}
+\author{Elizabeth Hutton}
+\begin{document}
+
+<<setup,include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+concordance=TRUE,
+cache = TRUE,
+fig.keep='high',
+fig.show = 'hold',
+fig.align='center',
+tidy=TRUE, 
+tidy.opts=list(width.cutoff=50)
+)
+@
+\maketitle
+
+\section{10.9 Applied}
+\begin{itemize}
+\item[a.] 
+
+<<fig.show = 'hold',fig.cap = "Complete Dendogram">>=
+library(ISLR)
+attach(USArrests)
+
+#dendogram w/ complete linkage, euclidean distance
+hc.complete = hclust(dist(USArrests), method="complete")
+plot(hc.complete)
+@
+\FloatBarrier 
+
+\item[b.]
+
+<<>>=
+#cut tree to form 3 clusters
+cut = cutree(hc.complete,3)
+
+#cluster 1 
+cut[cut==1]
+
+#cluster 2
+cut[cut==2]
+
+#cluster 3
+cut[cut==3]
+@
+
+\item[c.]
+
+<<fig.show = 'hold',fig.cap = "Scaled Dendogram">>=
+#repeat w/ scaled variables 
+scaled = scale(USArrests)
+hc.scaled = hclust(dist(scaled), method="complete")
+plot(hc.scaled)
+
+#cut tree to form 3 clusters
+cut = cutree(hc.scaled,3)
+
+#cluster 1 
+cut[cut==1]
+
+#cluster 2
+cut[cut==2]
+
+#cluster 3
+cut[cut==3]
+@
+
+\FloatBarrier 
+
+\item[d.]
+Scaling the variables before making the tree results in a less even distribution of the states over the 3 clusters. There are far more states in cluster 3 than in the other two. However, because the variables all have different units and scales, pre-scaling the data is appropriate. 
+
+\end{itemize}
+
+\section{10.11 Applied}
+\begin{itemize}
+\item[a.] 
+
+<<>>=
+data = read.csv('Ch10Ex11.csv',header = FALSE)
+@
+
+\item[b.]
+<<fig.show = 'hold',fig.cap = "Complete Dendogram">>=
+#complete dendogram
+dm = as.dist(1-cor(data))
+cor.complete = hclust(dm, method="complete")
+plot(cor.complete)
+@
+
+<<fig.show = 'hold',fig.cap = "Single Dendogram">>=
+#single dendogram
+cor.single = hclust(dm, method="single")
+plot(cor.single)
+@
+
+<<fig.show = 'hold',fig.cap = "Average Dendogram">>=
+#single dendogram
+cor.avg = hclust(dm, method="average")
+plot(cor.avg)
+@
+
+\FloatBarrier 
+
+When using complete or single linkage, the dendogram cleanly separates the data into its two natural clusters. Using average linkage does not. 
+
+\item[c.]
+
+You could perform PCA to determine which genes are the most different between the two clusters, diseased vs. healthy. The genes with the largest absolute value of loading will be more different across clusters. For example, the 10 most different genes are listed below: 
+
+<<>>=
+#PCA to find most different genes
+pr.out = prcomp(t(data))
+load = apply(pr.out$rotation, 1, sum)
+ordered = order(abs(load), decreasing = TRUE)
+
+#the most different genes
+ordered[1:10]
+@
+
+\end{itemize}
+
+\end{document}

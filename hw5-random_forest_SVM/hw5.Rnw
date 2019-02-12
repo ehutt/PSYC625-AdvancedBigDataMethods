@@ -1,0 +1,432 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{placeins}
+\title{HW 5}
+\author{Elizabeth Hutton}
+\begin{document}
+
+<<setup,include=FALSE>>=
+library(knitr)
+opts_chunk$set(
+concordance=TRUE,
+cache = TRUE,
+fig.keep='high',
+fig.show = 'hold',
+fig.align='center',
+tidy=TRUE, 
+tidy.opts=list(width.cutoff=50)
+)
+@
+\maketitle
+
+\section{8.8 Applied}
+\begin{itemize}
+\item[a./b.] 
+<<part-a,fig.show = 'hold',fig.cap = "Regression Tree",out.width='85%'>>=
+library(tree)
+library(ISLR)
+attach(Carseats)
+set.seed(1)
+
+#divide into train and test subsets 
+train = sample(c(TRUE,FALSE), nrow(Carseats),replace = TRUE)
+test = (!train)
+
+#fit regression tree to predict Sales
+tree.sales = tree(Sales~.,Carseats,subset=train)
+
+#summary and results 
+summary(tree.sales)
+tree.sales
+
+#plot tree 
+plot(tree.sales)
+text(tree.sales,pretty=0)
+@
+
+<<part-a2,fig.show = 'hold',fig.cap = "Actual vs. Predicted Sales",out.width='70%'>>=
+#get test predictions
+tree.preds = predict(tree.sales,Carseats[test,])
+mse = mean((tree.preds-Carseats[test,]$Sales)^2)
+
+#plot predictions vs. actual
+plot(Carseats[test,]$Sales,tree.preds,
+     xlab="Actual Sales",ylab="Predicted Sales")
+abline(0,1)
+@
+
+\FloatBarrier 
+The regression tree has a test MSE of \Sexpr{round(mse,2)} and the above plot of predicted vs. actual Sales indicates that the model is capturing the general trend, however with some variance. 
+
+\item[c.]
+
+<<part-c,fig.show = 'hold',fig.cap = "Pruning Results", fig.subcap=c("CV: Size of Tree vs. Deviance","Pruned Tree","Actual vs. Predicted Sales"),out.width='50%',fig.ncol= 2>>=
+#10-fold cross validation 
+cv.sales=cv.tree(tree.sales)
+plot(cv.sales$size,cv.sales$dev,type='b',
+     xlab="Size",ylab="Deviance")
+
+#prune tree with best size tree found from cv 
+b = cv.sales$size[which.min(cv.sales$dev)]
+prune.sales = prune.tree(tree.sales,best=b)
+plot(prune.sales)
+text(prune.sales,pretty=0)
+
+#get test predictions
+pruned.preds = predict(prune.sales,Carseats[test,])
+mse_pruned = mean((pruned.preds-Carseats[test,]$Sales)^2)
+
+#plot predictions vs. actual
+plot(Carseats[test,]$Sales,pruned.preds,
+     xlab="Actual Sales",ylab="Predicted Sales")
+abline(0,1)
+@
+
+\FloatBarrier
+Test MSE before pruning was \Sexpr{round(mse,2)} and increased to \Sexpr{round(mse_pruned,2)} after pruning. Therefore pruning did not improve model performance. You can see from the plot of Actual vs. Predicted values that, due to the structure of the pruned tree, there are only as many distinct predicted values as there are leaves of the tree even though the actual value is continuous. 
+
+\item[d.] 
+<<part-d,fig.show = 'hold',fig.cap = "Bagging Results">>=
+#bagging (m=p)
+library(randomForest)
+bag.sales=randomForest(Sales~.,data=Carseats,
+          subset=train,mtry=length(Carseats)-1,importance =TRUE)
+bag.sales
+
+#get predictions and test MSE 
+bag.preds = predict(bag.sales,newdata=Carseats[test,])
+mse_bag = mean((bag.preds-Carseats[test,]$Sales)^2)
+
+#get importance 
+importance(bag.sales)
+
+#plot predictions vs. actual 
+plot(Carseats[test,]$Sales,bag.preds,
+     xlab="Actual Sales",ylab="Predicted Sales")
+abline(0,1)
+
+@
+
+\FloatBarrier 
+Test MSE from the bagging method is \Sexpr{round(mse_bag,2)}, an improvement. According to this model, \emph{ShelveLoc} and \emph{Price} are the most important predictors. 
+
+\item[e.]
+
+<<part-e,fig.show = 'hold',fig.cap = "Random Forest Results",fig.subcap=c("No. Split Variables vs. MSE","Actual vs. Predicted Sales"),out.width='50%',fig.ncol= 2>>=
+
+#random forest with range of m considered for split 
+#range from default m=p/3=10/3~3 to 10 
+mse_vec = vector(length = 8)
+for (p in 3:10){
+  rf.sales=randomForest(Sales~.,data=Carseats,
+                        mtry=p,subset=train,importance =TRUE)
+  
+  #get predictions and test MSE 
+  rf.preds = predict(rf.sales,newdata=Carseats[test,])
+  mse_vec[p-2] = mean((rf.preds-Carseats[test,]$Sales)^2)
+}
+
+#plot m split vs. test MSE 
+plot(c(3:10),mse_vec,type='b',xlab="M",ylab="Test MSE")
+
+#choose best value of m for random forest
+best_m = which.min(mse_vec)+2
+rf.sales=randomForest(Sales~.,data=Carseats,
+         mtry=best_m,subset=train,importance =TRUE)
+rf.sales
+
+#get predictions and test MSE 
+rf.preds = predict(rf.sales,newdata=Carseats[test,])
+mse_rf = mean((rf.preds-Carseats[test,]$Sales)^2)
+
+#get importance 
+importance(rf.sales)
+
+#plot predictions vs. actual 
+plot(Carseats[test,]$Sales,rf.preds,
+     xlab="Actual Sales",ylab="Predicted Sales")
+abline(0,1)
+detach(Carseats)
+@
+
+As m (the number of variables considered at each tree split) increases, test MSE decreases until it approaches p (the total number of predictors). Of the various values of m tried, $m = \Sexpr{best_m}$ produced the lowest test MSE. As before, \emph{ShelveLoc} and \emph{Price} are the most important predictors. 
+
+\end{itemize}
+
+\section{8.9 Applied}
+
+\begin{itemize}
+\item[a.] 
+<<>>=
+attach(OJ)
+set.seed(1)
+
+#divide into train and test subsets 
+train = sample(1:nrow(OJ),800) 
+oj.train = OJ[train,]
+oj.test = OJ[-train,]
+@
+
+\item[b./c.] 
+<<>>=
+#fit regression tree to predict purchase 
+tree.oj = tree(Purchase~.,oj.train)
+
+#summary and results 
+summary(tree.oj)
+tree.oj
+@
+
+This classification tree has 8 terminal nodes with an error rate of 0.165. The 7th terminal node, shown at the bottom of the summary, states that if the observation has a LoyalCH score greater than 0.765, it predicts that the customer will buy Citrus Hill OJ (CH) with 96\% certainty. 
+
+\item[d.]
+<<fig.show = 'hold',fig.cap = "Classification Tree",out.width='50%'>>=
+
+#plot tree 
+plot(tree.oj)
+text(tree.oj,pretty=0)
+@
+
+Looking at the tree, it is clear that loyalty to a particular brand (Citrus Hill vs. Minute Maid) is one of the key predictors of the classification. 
+
+\item[e.]
+<<fig.show = 'hold',fig.cap = "Confusion Matrix",out.width='50%'>>=
+
+#get test predictions
+tree.preds = predict(tree.oj, oj.test,type='class')
+
+#confusion matrix and error
+error = sum(tree.preds!=oj.test$Purchase) / 
+  length(tree.preds)
+table(tree.preds,oj.test$Purchase)
+@
+Test error rate is \Sexpr{round(error,4)}. 
+
+\item[f. - i.]
+<<fig.show = 'hold',fig.cap = "Pruning Results", fig.subcap=c("CV: Size of Tree vs. Deviance","Pruned Tree"),out.width='50%'>>=
+
+#10-fold cross validation 
+cv.oj=cv.tree(tree.oj)
+plot(cv.oj$size,cv.oj$dev,type='b',
+     xlab="Size",ylab="Deviance")
+
+#prune tree with best size tree found from cv 
+#if it is full tree, then choose 4 nodes 
+best = 8 - which.min(cv.oj$dev) + 1
+if(best<8){
+  b = best
+} else{b = 4}
+ 
+prune.oj = prune.tree(tree.oj,best=b)
+plot(prune.oj)
+text(prune.oj,pretty=0)
+@
+
+<<>>= 
+#get training predictions 
+pruned.preds_train = predict(prune.oj,oj.train,type='class')
+og.preds_train = predict(tree.oj,oj.train,type='class')
+
+#get training errors 
+train_error_pruned = sum(pruned.preds_train!=oj.train$Purchase) / 
+  length(pruned.preds_train)
+train_error_og = sum(og.preds_train!=oj.train$Purchase) / 
+  length(og.preds_train)
+
+#get test predictions 
+pruned.preds_test = predict(prune.oj,oj.test,
+                            type='class')
+og.preds_test = predict(tree.oj,oj.test,
+                        type='class')
+
+#get training errors 
+test_error_pruned = sum(pruned.preds_test!=oj.test$Purchase) / 
+  length(pruned.preds_test)
+test_error_og = sum(og.preds_test!=oj.test$Purchase) / 
+  length(og.preds_test)
+@
+
+10-fold cross-validation found that a tree with \Sexpr{b} terminal nodes is optimal. 
+
+\item[j.] Train error for the pruned tree is \Sexpr{round(train_error_pruned,4)} vs. \Sexpr{round(train_error_og,4)} for the original tree. They are very similar, but the pruned tree has slightly higher error. 
+
+\item[k.] Test error after pruning is \Sexpr{round(test_error_pruned,4)}. There is a slight decrease in classification accuracy for the pruned tree, but it has half the number of terminal nodes. 
+\end{itemize}
+
+\section{9.7 Applied}
+\begin{itemize}
+\item[a.]
+<<>>=
+attach(Auto)
+m = as.numeric(summary(Auto$mpg)[3]) #median 
+df = subset(Auto, select = -c(8, 9))
+df[mpg<=m,1] = FALSE
+df[mpg>m,1] = TRUE
+@
+
+\item[b.] Linear SVM: 
+
+<<>>=
+library(e1071)
+#10-fold CV for linear SVM 
+set.seed(1)
+tune.linear=tune(svm,factor(mpg)~.,data=df,kernel="linear",
+            ranges=list(cost=c(0.001, 0.01, 0.1, 1,5,10,100)))
+summary(tune.linear)
+
+#use best model 
+best.linear=tune.linear$best.model 
+error.linear = tune.linear$best.performance
+summary(best.linear)
+@
+
+Cross validation results show that a model with cost = 1 performs the best on this dataset. 
+
+\item[c.] Radial SVM: 
+<<>>=
+#CV
+tune.radial=tune(svm, factor(mpg)~., data=df, 
+  kernel="radial",
+  ranges=list(cost=c(0.1,1,10,100,1000),
+  gamma=c(0.5,1,2,3,4) ))
+
+#best model 
+best.radial=tune.radial$best.model
+error.radial = tune.radial$best.performance
+summary(tune.radial)
+@
+
+Polynomial SVM: 
+<<fig.show = 'hold',fig.cap = "Polynomial SVM",out.width='50%'>>=
+#CV
+tune.poly=tune(svm, factor(mpg)~., data=df, 
+          kernel="polynomial",
+          ranges=list(cost=c(0.1,1,10,100,1000),
+          degree=c(1,2,3,4,5)))
+
+#best model 
+best.poly=tune.poly$best.model
+error.poly = tune.poly$best.performance
+summary(tune.poly)
+@
+
+\item[d.] The cross-validated errors for each type of SVM show that radial is best: \\
+\\
+Linear: \Sexpr{round(error.linear,4)}
+Radial: \Sexpr{round(error.radial,4)}
+Polynomial: \Sexpr{round(error.poly,4)}
+\end{itemize}
+
+\section{9.9 Applied} 
+\begin{itemize}
+\item[a.]
+<<>>=
+attach(OJ)
+set.seed(1)
+
+#divide into train and test subsets 
+train = sample(1:nrow(OJ),800) 
+oj.train = OJ[train,]
+oj.test = OJ[-train,]
+@
+
+\item[b.]
+<<>>=
+svmfit=svm(Purchase~., data=oj.train, kernel="linear",
+           cost=0.01)
+summary(svmfit)
+@
+
+Using a cost of 0.01 creates an SVM model with a huge number of support vectors: here, 432. 
+
+\item[c.]
+<<>>=
+train.pred = predict(svmfit,oj.train)
+test.pred = predict(svmfit,oj.test)
+
+train.error = sum(train.pred!=oj.train$Purchase) / nrow(oj.train)
+test.error = sum(test.pred!=oj.test$Purchase) / nrow(oj.test)
+@
+
+Train error (\Sexpr{round(train.error,4)}) and test error (\Sexpr{round(test.error,4)}) are similar, with training error slightly smaller. 
+
+\item[d.] Linear SVM
+<<>>=
+set.seed(1)
+tune.linear=tune(svm,Purchase~.,data=oj.train,kernel="linear",
+            ranges=list(cost=c( 0.01, 0.1, 1,5,10)))
+summary(tune.linear)
+
+#use best model 
+best.linear=tune.linear$best.model 
+error.linear = tune.linear$best.performance
+summary(best.linear)
+@
+
+\item[e.] Train and Test Errors 
+<<>>=
+train.pred1 = predict(best.linear,oj.train)
+test.pred1 = predict(best.linear,oj.test)
+
+train.error_l = sum(train.pred1!=oj.train$Purchase) / nrow(oj.train)
+test.error_l = sum(test.pred1!=oj.test$Purchase) / nrow(oj.test)
+@
+
+Train error (\Sexpr{round(train.error_l,4)}) and test error (\Sexpr{round(test.error_l,4)}) are similar, with training error slightly smaller. The error did not seem to change much with the different cost value. 
+
+\item[f.] Radial SVM
+<<>>=
+set.seed(1)
+tune.radial=tune(svm,factor(Purchase)~.,data=oj.train,
+            kernel="radial",
+            ranges=list(cost=c( 0.01, 0.1, 1,5,10)))
+summary(tune.radial)
+
+#use best model 
+best.radial=tune.radial$best.model 
+error.radial = tune.radial$best.performance
+summary(best.radial)
+
+#train and test predictions
+train.pred2 = predict(best.radial,oj.train)
+test.pred2 = predict(best.radial,oj.test)
+
+#train and test errors
+train.error_r = sum(train.pred2!=oj.train$Purchase) / 
+  nrow(oj.train)
+test.error_r = sum(test.pred2!=oj.test$Purchase) / 
+  nrow(oj.test)
+@
+
+Train error (\Sexpr{round(train.error_r,4)}) is only slightly lower than test error (\Sexpr{round(test.error_r,4)}). 
+
+\item[g.] Polynomial SVM
+<<>>=
+set.seed(1)
+tune.poly=tune(svm,Purchase~.,data=oj.train,
+            kernel="polynomial", degree=2,
+            ranges=list(cost=c( 0.01, 0.1, 1,5,10)))
+summary(tune.poly)
+
+#use best model 
+best.poly=tune.poly$best.model 
+error.poly = tune.poly$best.performance
+summary(best.poly)
+
+#train and test predictions
+train.pred3 = predict(best.poly,oj.train)
+test.pred3 = predict(best.poly,oj.test)
+
+#train and test errors
+train.error_p = sum(train.pred3!=oj.train$Purchase) / 
+  nrow(oj.train)
+test.error_p = sum(test.pred3!=oj.test$Purchase) / 
+  nrow(oj.test)
+@
+
+Again, train error (\Sexpr{round(train.error_p,4)}) is only slightly lower than test error (\Sexpr{round(test.error_p,4)}). 
+
+\item[h.] Overall, the three types of SVM perform similarly on the test data. Only radial has a slight advantage with a test error of \Sexpr{round(test.error_r,4)}. 
+\end{itemize}
+\end{document}

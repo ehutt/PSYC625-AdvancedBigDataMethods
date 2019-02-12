@@ -1,0 +1,263 @@
+\documentclass{article}
+\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{placeins}
+\title{HW 3}
+\author{Elizabeth Hutton}
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle 
+
+\section{5.7 Applied}
+\begin{itemize}
+\item[a.] Logistic Regression Model: $Direction \sim Lag1 + Lag2$
+\item[b.] Logistic Regression Model excluding first observation: 
+$Direction[-1] \sim Lag1[-1] + Lag2[-1]$
+\item[c.] The model from part b. incorrectly predicts "Up" for the first observation, using a cutoff of 0.5. 
+
+<<echo=F>>= 
+library(ISLR)
+attach(Weekly)
+set.seed(1)
+
+glm.fit = glm(Direction ~ Lag1 +Lag2, data = Weekly, family=binomial)
+glm.fit2 = glm(Direction[-1] ~ Lag1[-1] +Lag2[-1], data = Weekly, family=binomial)
+glm.probs =predict(glm.fit2,type ="response")
+
+if (glm.probs[1] > 0.5){
+  pred = "Incorrect"
+} else {pred = "Correct"} 
+
+incorrect = 0
+n = length(Weekly[,1])
+for (i in 1:n){
+glm.fit = glm(Direction[-i] ~ Lag1[-i] +Lag2[-i], data = Weekly, family=binomial)
+glm.probs =predict(glm.fit,type ="response")
+glm.probs =predict (glm.fit ,type ="response")
+glm.pred=rep ("Down",n)
+glm.pred[glm.probs >.5]="Up"
+if (glm.pred[i]!=Weekly[i,9]) {incorrect = incorrect +1}
+}
+loocv = sum(incorrect)/n
+
+@
+\item[d./c.] The LOOCV test error is \Sexpr{round(loocv,3)}. 
+\end{itemize}
+
+\section{5.6 Applied}
+
+\begin{itemize}
+\item[a.] Standard error estimates for the coefficients $balance$ and $income$ from the logistic regression model of $Default \sim income + balance$: 
+<<echo=F>>=
+attach(Default)
+set.seed(1)
+glm.fit = glm(default ~ income + balance,data = Default,family = binomial)
+se = summary(glm.fit)$coefficients[,2] 
+print(se)
+@
+
+\item[b./c.]
+<<>>=
+#bootstrap function for logistic regression of default ~ income + balance 
+#returns estimated coefficients for intercept, income, and balance 
+boot.fn = function(data,index){
+  return (coef(glm(default ~ income + balance,
+          data = Default,family = binomial,subset=index)))
+}
+
+#1000 bootstrap implementations 
+#returns bootstrapped coefficients and standard errors
+library(boot)
+#boot(Default,boot.fn,1000)
+@
+\item[d.] The bootstrap function did not produce significantly different estimates for the standard errors of coefficients, suggesting that the coefficients of the regression model are reliable. 
+\end{itemize}
+\section{6.9 Applied}
+\begin{itemize}
+<<echo=F>>=
+attach(College)
+library(leaps)
+set.seed(1)
+train = sample(c(TRUE,FALSE), nrow(College), rep=TRUE)
+test = (!train)
+
+lm.fit = lm(Apps~.,data = College, subset=train)
+lm.pred =predict(lm.fit,College[test,],type="response")
+mse_ls = mean((lm.pred - Apps[test])^2)
+
+@
+\item[a./b.] Test MSE for the linear model $Apps \sim .$ is \Sexpr{round(mse_ls,1)}. 
+<<echo=F>>=
+library(glmnet)
+x=model.matrix(Apps ~. ,College)[,-2]
+y = College$Apps
+
+#ridge regression with lambda range [10^-2,10^10]
+grid =10^seq(10,-2,length=100)
+ridge.mod =glmnet(x,y,alpha =0, lambda =grid)
+
+#function to generate predictions for cross validation 
+predict.regsubsets =function(object,newdata ,id ,...){
+  form=as.formula (object$call [[2]])
+  mat=model.matrix (form ,newdata )
+  coefi =coef(object ,id=id)
+  xvars =names (coefi )
+  mat[,xvars ]%*% coefi
+}
+
+#make test and train sets 
+set.seed(1)
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+
+#cross validation for lambda
+cv.out = cv.glmnet(x[train ,], y[train], alpha =0)
+bestlam_r =cv.out$lambda.min
+ridge.pred=predict(ridge.mod,s=bestlam_r,newx=x[test,])
+mse_ridge = mean((ridge.pred - y.test)^2)
+@
+\item[c.] A 10-fold cross-validated ridge regression model $Apps \sim .$ with $\lambda = \Sexpr{round(bestlam_r,2)}$ has a test MSE of \Sexpr{round(mse_ridge,1)}, an improvement over the linear model. 
+
+<<echo=F>>= 
+#lasso 
+lasso.mod =glmnet(x[train,],y[train],alpha =1, lambda =grid)
+cv.out =cv.glmnet (x[train ,],y[train],alpha =1)
+bestlam_l =cv.out$lambda.min
+lasso.pred=predict(lasso.mod ,s=bestlam_l ,newx=x[test ,])
+mse_lasso = mean((lasso.pred - y.test)^2)
+
+#final model on full data set
+out=glmnet(x,y,alpha =1, lambda =grid)
+lasso.coef=predict(out,type = "coefficients",s=bestlam_l)[1:18,]
+@
+\item[d.] A 10-fold cross-validated lasso model with $\lambda = \Sexpr{round(bestlam_l,2)}$ gives a test MSE of \Sexpr{round(mse_lasso,1)} and 3 out of the 17 predictors have coefficients equal to 0. 
+
+<<echo=F,fig=T,include=F,label=PCR>>=
+#PCR 
+library(pls)
+set.seed(2)
+#fit model on training data 
+pcr.fit = pcr(Apps~., data = College, subset = train, scale = T, validation = "CV")
+validationplot(pcr.fit, val.type = "MSEP")
+@
+<<echo=F,fig=T,include=F,label=mse_pcr>>=
+#test using various M's 
+mse_pcr = matrix(NA,nrow = 17, ncol = 1)
+for (i in 1:17){
+  pcr.pred=predict(pcr.fit,x[test,], ncomp=i)
+  mse_pcr[i,] = mean((pcr.pred - y.test)^2)
+  }
+plot(mse_pcr)
+@
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw3-PCR}
+\caption{PCR Results}
+\label{fig:PCR}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw3-mse_pcr}
+\caption{MSE vs. M components}
+\label{fig:mse_pcr}
+\end{subfigure}
+\end{figure}
+\FloatBarrier 
+\item[e.] Performing PCR on the training data for various M number of components yields the above results. From the plot of training MSEP vs. M, the lowest error is produced for M=16, but that is only 1 fewer than the total number of predictors. However, it appears that there is a steep drop in error that stays mostly steady from M=5 to M=15, indicating that as few as 5 components can capture most of the variation in the model. Plotting test MSE vs. the number of components also shows a slight dip in error at M=9 with a test MSE = \Sexpr{round(mse_pcr[9,],1)}. 
+
+<<echo=F,fig=T,include=F,label=PLS>>=
+#PLS 
+pls.fit = plsr(Apps~., data = College, subset = train, scale = T, validation = "CV")
+validationplot(pls.fit, val.type = "MSEP")
+@
+<<echo=F,fig=T,include=F,label=mse_pls>>=
+mse_pls = matrix(NA,nrow = 17, ncol = 1)
+for (i in 1:17){
+  pls.pred=predict(pls.fit,x[test,], ncomp=i)
+  mse_pls[i,] = mean((pls.pred - y.test)^2)
+  }
+plot(mse_pls)
+@
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw3-PLS}
+\caption{PLS Results}
+\label{fig:PLS}
+\hfill
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw3-mse_pls}
+\caption{MSE vs. M components}
+\label{fig:mse_pls}
+\end{subfigure}
+\end{figure}
+\FloatBarrier 
+\item[f.] Both the plots of training MSEP and testing MSE vs. M number of components show a clear drop in error for M=6 components. Test MSE for 6 components is \Sexpr{round(mse_pls[6,],1)}. 
+
+\item[g.] None of these methods seem to do a very good job of predicting the number of applications a college will receive, that is, they all have high test MSE's. There is not too big of a difference between the performance of these different models, although lasso seemed to perform best with the highest interpretability. 
+\end{itemize}
+
+\section{6.11 Applied} 
+<<echo=F>>=
+library(MASS)
+attach(Boston)
+
+#separate test and train sets 
+train = sample(c(TRUE,FALSE), nrow(Boston), rep=TRUE)
+test = (!train)
+x=model.matrix(crim ~. ,Boston)[,-1]
+y = Boston$crim
+y.test=y[test]
+
+#ridge regression w cv 
+grid =10^seq(10,-2,length=100)
+ridge.mod =glmnet(x,y,alpha =0, lambda =grid)
+cv.out = cv.glmnet(x[train ,], y[train], alpha =0)
+bestlam_r = cv.out$lambda.min
+ridge.pred=predict(ridge.mod,s=bestlam_r,newx=x[test,])
+mse_ridge = mean((ridge.pred - y.test)^2)
+
+#lasso 
+lasso.mod =glmnet(x[train,],y[train],alpha =1, lambda =grid)
+cv.out =cv.glmnet (x[train ,],y[train],alpha =1)
+bestlam_l =cv.out$lambda.min
+lasso.pred=predict(lasso.mod ,s=bestlam_l ,newx=x[test ,])
+mse_lasso = mean((lasso.pred - y.test)^2)
+
+#final model on full data set
+out=glmnet(x,y,alpha =1, lambda =grid)
+lasso.coef=predict(out,type = "coefficients",s=bestlam_l)[1:14,]
+zeros = sum(lasso.coef == 0)
+@
+
+<<echo=F,fig=T,include=F,label=PCR2>>=
+#PCR
+pcr.fit = pcr(crim~., data = Boston, subset = train, scale = T, validation = "CV")
+validationplot(pcr.fit, val.type = "MSEP")
+M_pcr = 5
+pcr.pred=predict(pcr.fit,x[test,], ncomp=M_pcr)
+mse_pcr = mean((pcr.pred - y.test)^2)
+@
+
+<<echo=F,fig=T,include=F,label=PLS2>>=
+#PLS 
+pls.fit = plsr(crim~., data = Boston, subset = train, scale = T, validation = "CV")
+validationplot(pls.fit, val.type = "MSEP")
+M_pls = 9 
+pcr.pred=predict(pcr.fit,x[test,], ncomp=M_pls)
+mse_pls = mean((pcr.pred - y.test)^2)
+@
+
+\begin{itemize} 
+\item Ridge regression: \Sexpr{round(mse_ridge,2)}
+\item Lasso model: \Sexpr{round(mse_lasso,2)} with 7 coefficients
+\item PCR: \Sexpr{round(mse_pcr,2)} with $M = \Sexpr{M_pcr}$ components
+\item PLS: \Sexpr{round(mse_pls,2)} with $M = \Sexpr{M_pls}$ components
+\end{itemize}  
+
+The above statistics present the test MSE for four 10-fold cross-validated models. Interestingly, ridge regression has the lowest error. From previous explorations of the dataset, I noticed that many of the variables were correlated with crime rate, so it is reasonable to believe that a model which includes all the predictors would perform well.          
+\end{document}

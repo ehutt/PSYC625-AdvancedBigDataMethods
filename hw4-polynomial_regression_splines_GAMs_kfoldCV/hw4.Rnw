@@ -1,0 +1,645 @@
+\documentclass{article}
+\usepackage{Sweave}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{placeins}
+\title{HW 4}
+\author{Elizabeth Hutton}
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+
+\section{7.9 Applied}
+\begin{itemize}
+\item[a.] Cubic Polynomial Regression of \emph{Nox} vs. \emph{Dis} 
+
+<<fig=TRUE,include=FALSE,label=reg1>>= 
+library(MASS)
+attach(Boston)
+set.seed(1)
+
+#cubic polynomial regression 
+fit = lm(nox~poly(dis,3), data = Boston)
+summary(fit)
+
+#make predictions for values of dis within range(dis)
+lims = range(dis)
+dis.grid = seq(from=lims[1],to=lims[2])
+preds=predict(fit,newdata=list(dis=dis.grid),se=TRUE)
+
+#get standard error bands 
+se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+
+#plot data and regression line w/ error bands 
+plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+lines(dis.grid,preds$fit,lwd=2,col="blue")
+matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+
+@
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{hw4-reg1}
+\caption{Cubic Regression Line for Nox vs. Distance}
+\label{fig:reg1}
+\end{figure}
+\FloatBarrier
+\item[b.] Regression polynomials degrees 1 through 10 
+<<echo=FALSE>>= 
+library(MASS)
+n=10
+rss = vector(length = n)
+fits = vector(length = n)
+@
+%fit1
+<<echo=FALSE,fig=TRUE,label=fit1,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit1 = lm(nox~poly(dis,1), data = Boston)
+  rss[1] = sum(residuals(fit1)^2)
+ 
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit1,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit1}
+\caption{Degree 1 Polynomial Fit RSS = \Sexpr{round(rss[1],3)}}
+\label{fig:fit1}
+\end{figure}
+%fit2
+<<echo=FALSE,fig=TRUE,label=fit2,include=FALSE>>=
+  #fit2 regression, get rss, get predictions
+  fit2 = lm(nox~poly(dis,2), data = Boston)
+  rss[2] = sum(residuals(fit2)^2)
+
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit2,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit2}
+\caption{Degree 2 Polynomial Fit RSS = \Sexpr{round(rss[2],3)}}
+\label{fig:fit2}
+\end{figure}
+%fit3
+<<echo=FALSE,fig=TRUE,label=fit3,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit3 = lm(nox~poly(dis,3), data = Boston)
+  rss[3] = sum(residuals(fit3)^2)
+
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit3,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit3}
+\caption{Degree 3 Polynomial Fit RSS = \Sexpr{round(rss[3],3)}}
+\label{fig:fit3}
+\end{figure}
+%fit4
+<<echo=FALSE,fig=TRUE,label=fit4,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit4 = lm(nox~poly(dis,4), data = Boston)
+  rss[4] = sum(residuals(fit4)^2)
+
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit4,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit4}
+\caption{Degree 4 Polynomial Fit RSS = \Sexpr{round(rss[4],3)}}
+\label{fig:fit4}
+\end{figure}
+%fit5
+<<echo=FALSE,fig=TRUE,label=fit5,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit5 = lm(nox~poly(dis,5), data = Boston)
+  rss[5] = sum(residuals(fit5)^2)
+
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit5,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit5}
+\caption{Degree 5 Polynomial Fit RSS = \Sexpr{round(rss[5],3)}}
+\label{fig:fit5}
+\end{figure}
+%fit6
+<<echo=FALSE,fig=TRUE,label=fit6,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit6 = lm(nox~poly(dis,6), data = Boston)
+  rss[6] = sum(residuals(fit6)^2)
+
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit6,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit6}
+\caption{Degree 6 Polynomial Fit RSS = \Sexpr{round(rss[6],3)}}
+\label{fig:fit6}
+\end{figure}
+%fit7
+<<echo=FALSE,fig=TRUE,label=fit7,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit7 = lm(nox~poly(dis,7), data = Boston)
+  rss[7] = sum(residuals(fit7)^2)
+  
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit7,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit7}
+\caption{Degree 7 Polynomial Fit RSS = \Sexpr{round(rss[7],3)}}
+\label{fig:fit7}
+\end{figure}
+%fit8
+<<echo=FALSE,fig=TRUE,label=fit8,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit8 = lm(nox~poly(dis,8), data = Boston)
+  rss[8] = sum(residuals(fit8)^2)
+  
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit8,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit8}
+\caption{Degree 8 Polynomial Fit RSS = \Sexpr{round(rss[8],3)}}
+\label{fig:fit8}
+\end{figure}
+%fit9
+<<echo=FALSE,fig=TRUE,label=fit9,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit9 = lm(nox~poly(dis,9), data = Boston)
+  rss[9] = sum(residuals(fit9)^2)
+  
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit9,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit9}
+\caption{Degree 9 Polynomial Fit RSS = \Sexpr{round(rss[9],3)}}
+\label{fig:fit9}
+\end{figure}
+%fit10
+<<echo=FALSE,fig=TRUE,label=fit10,include=FALSE>>=
+  #fit regression, get rss, get predictions
+  fit10 = lm(nox~poly(dis,10), data = Boston)
+  rss[10] = sum(residuals(fit10)^2)
+  
+  #make predictions for values of dis within range(dis)
+  lims = range(dis)
+  dis.grid = seq(from=lims[1],to=lims[2])
+  
+  preds=predict(fit10,newdata=list(dis=dis.grid),se=TRUE)
+  
+  #get standard error bands 
+  se.bands=cbind(preds$fit+2*preds$se.fit,preds$fit-2*preds$se.fit)
+  
+  #plot data and regression line w/ error bands 
+  plot(dis,nox,xlim=lims ,cex=.5,col="darkgrey")
+  lines(dis.grid,preds$fit,lwd=2,col="blue")
+  matlines(dis.grid,se.bands,lwd=1,col="blue",lty=3) 
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-fit10}
+\caption{Degree 10 Polynomial Fit RSS = \Sexpr{round(rss[10],3)}}
+\label{fig:fit10}
+\end{figure}
+\FloatBarrier 
+\item[c.] K-Fold Cross Validation 
+<<fig=TRUE,include=FALSE,label=cv>>=
+set.seed(1)
+n_folds = 5 # k folds
+deg = 10 # up to degree 5 polynomials considered
+fold = sample(n_folds, nrow(Boston), replace = TRUE)
+mse = vector(length=n_folds) #store mse for each k
+cv = vector(length=deg) #cross validated mse for each degree 
+
+for (d in 1:deg){
+  for (k in 1:n_folds){
+    
+    #fit degree d on all but kth fold, test on kth fold predictions
+    test = (fold==k)
+    train = !test
+    fit = lm(nox~poly(dis,d), data = Boston, subset = train)
+    pred=predict(fit,Boston[test,],type ="response")
+    mse[k] = mean((pred-nox[test])^2) #test mse for kth fold
+  }
+  cv[d] = mean(mse) #mean mse over all k folds 
+}
+plot(cv,xlab = "Degree",ylab = "Test MSE")
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-cv}
+\caption{Cross Validated MSE vs. Polynomial Degree}
+\label{fig:cv}
+\end{figure}
+\FloatBarrier
+K-fold cross validation reveals that a 4-degree polynomial provides the best fit to the data, with a test MSE of \Sexpr{round(cv[4],4)}, as shown in the above plot.  
+
+\item[d.] Regression spline with 4 degrees of freedom: for a cubic spline, use 1 knot at the halfway point for 4 DF. 
+
+<<fig=TRUE,include=FALSE,label=sp>>=
+library(splines)
+fit=lm(nox ~ bs(dis,df=4),data=Boston)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-sp}
+\caption{Cubic Spline with 4 DF, 1 Knot}
+\label{fig:sp}
+\end{figure}
+\FloatBarrier
+
+\item[e.] Cubic splines with degrees of freedom ranging from 5 to 10: 
+
+% 5 DF 
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp1>>= 
+rss = vector(length=6)
+fit=lm(nox ~ bs(dis,df=5),data=Boston)
+rss[1]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+% 6 DF
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp2>>= 
+fit=lm(nox ~ bs(dis,df=6),data=Boston)
+rss[2]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+% 7 DF
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp3>>= 
+fit=lm(nox ~ bs(dis,df=7),data=Boston)
+rss[3]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+% 8 DF
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp4>>= 
+fit=lm(nox ~ bs(dis,df=8),data=Boston)
+rss[4]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+% 9 DF
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp5>>= 
+fit=lm(nox ~ bs(dis,df=9),data=Boston)
+rss[5]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+% 10 DF 
+<<echo=FALSE,fig=TRUE,include=FALSE,label=sp6>>= 
+fit=lm(nox ~ bs(dis,df=10),data=Boston)
+rss[6]=sum(residuals(fit)^2)
+pred=predict(fit,newdata=list(dis=dis.grid),se=T)
+#plot spline with std error 
+plot(dis,nox,col="gray")
+lines(dis.grid,pred$fit,lwd=2)
+lines(dis.grid,pred$fit+2*pred$se ,lty="dashed")
+lines(dis.grid,pred$fit-2*pred$se ,lty="dashed")
+@
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp1}
+\caption{5 DF Spline, RSS = \Sexpr{round(rss[1],3)}}
+\label{fig:sp1}
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp2}
+\caption{6 DF Spline, RSS = \Sexpr{round(rss[2],3)}}
+\label{fig:sp2}
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp3}
+\caption{7 DF Spline, RSS = \Sexpr{round(rss[3],3)}}
+\label{fig:sp3}
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp4}
+\caption{8 DF Spline, RSS = \Sexpr{round(rss[4],3)}}
+\label{fig:sp4}
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp5}
+\caption{9 DF Spline, RSS = \Sexpr{round(rss[5],3)}}
+\label{fig:sp5}
+\end{subfigure}
+\begin{subfigure}{0.4\textwidth}
+\includegraphics[width=\textwidth]{hw4-sp6}
+\caption{10 DF Spline, RSS = \Sexpr{round(rss[6],3)}}
+\label{fig:sp6}
+\end{subfigure}
+\caption{Cubic Splines with Various Degrees Freedom}
+\end{figure}
+\FloatBarrier
+
+\item[f.] K-Fold Cross Validation to Select DF 
+<<fig=TRUE,include=FALSE,label=cv2>>=
+set.seed(1)
+n_folds = 5 # k folds
+deg = 15 # up to 15 degrees of freedom considered (starting from 4 DF)
+fold = sample(n_folds, nrow(Boston), replace = TRUE)
+mse = vector(length=n_folds) #store mse for each k
+cv = vector(length=deg-4+1) #cross validated mse for each DF 
+
+for (d in 4:deg){
+  for (k in 1:n_folds){
+    
+    #fit degree d on all but kth fold, test on kth fold predictions
+    test = (fold==k)
+    train = !test
+    fit = lm(nox~bs(dis,df=d), data = Boston, subset = train)
+    pred=predict(fit,Boston[test,],type ="response")
+    mse[k] = mean((pred-nox[test])^2) #test mse for kth fold
+  }
+  cv[d-4+1] = mean(mse) #mean mse over all k folds 
+}
+DF = seq(4,deg, by=1)
+plot(DF,cv,xlab = "Degree Freedom",ylab = "Test MSE")
+@
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{hw4-cv2}
+\caption{5-Fold Cross Validation Results}
+\label{fig:cv2}
+\end{figure}
+\FloatBarrier
+The above plot of test MSE vs. DF from k-fold cross-validation shows a steep drop from $DF = 4$ to $DF = 5$ and increases gradually after that. Thus, 5 degrees of freedom for a cubic spline provides the best fit, with a test MSE of \Sexpr{round(cv[2],3)}. 
+\end{itemize}
+
+\section{7.10 Applied}
+\begin{itemize}
+\item[a.] Forward selection to choose predictors for \emph{Outstate} from the \emph{College} data. 
+<<>>=
+library(ISLR)
+library(leaps)
+set.seed(1)
+# train and test subsets 
+train = sample(c(TRUE,FALSE), nrow(College), rep=TRUE)
+test = (!train)
+n = length(College)-1 #num predictors 
+#forward selection of predictor subset
+regfit.fwd = regsubsets(Outstate ~.,data=College[train,], nvmax=n, method ="forward")
+#cross validation 
+test.mat=model.matrix(Outstate~.,data=College[test,])
+val.errors=rep(NA,n)
+for(i in 1:n){
+  coefi=coef(regfit.fwd,id=i)
+  pred=test.mat[,names(coefi)]%*%coefi
+  val.errors[i]=mean((College$Outstate[test]-pred)^2)
+}
+
+#best model has min test mse 
+best = which.min(val.errors)
+coef(regfit.fwd,id=best)
+@
+\item[b.] GAM model of \emph{Oustate} from the 11 variables selected in previous step: 
+<<>>=
+library(gam)
+gam2 = gam(Outstate~ Private + s(Apps,df=5)+ s(Accept,df=5) + s(Top10perc,df=5) 
+           + s(F.Undergrad,df=5) + s(Room.Board,df=5) + s(Personal,df=5) 
+           + s(PhD,df=5) + s(perc.alumni,df=5) + s(Expend,df=5) 
+           + s(Grad.Rate,df=5), data=College[train,])
+summary(gam2)
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam1>>=
+plot(gam2, se=TRUE,terms="Private",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam2>>=
+plot(gam2, se=TRUE,terms="s(Apps, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam3>>=
+plot(gam2, se=TRUE,terms="s(Accept, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam4>>=
+plot(gam2, se=TRUE,terms="s(Top10perc, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam5>>=
+plot(gam2, se=TRUE,terms="s(F.Undergrad, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam6>>=
+plot(gam2, se=TRUE,terms="s(Room.Board, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam7>>=
+plot(gam2, se=TRUE,terms="s(Personal, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam8>>=
+plot(gam2, se=TRUE,terms="s(PhD, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam9>>=
+plot(gam2, se=TRUE,terms="s(perc.alumni, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam10>>=
+plot(gam2, se=TRUE,terms="s(Expend, df = 5)",col="blue")
+@
+
+<<fig=TRUE,include=FALSE,echo=FALSE,label=gam11>>=
+plot(gam2, se=TRUE,terms="s(Grad.Rate, df = 5)",col="blue")
+@
+
+\begin{figure}[h]
+\centering
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam2}
+\label{fig:gam2}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam3}
+\label{fig:gam3}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam4}
+\label{fig:gam4}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam5}
+\label{fig:gam5}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam6}
+\label{fig:gam6}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam7}
+\label{fig:gam7}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam8}
+\label{fig:gam8}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam9}
+\label{fig:gam9}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam10}
+\label{fig:gam10}
+\end{subfigure}
+\begin{subfigure}{0.35\textwidth}
+\includegraphics[width=\textwidth]{hw4-gam11}
+\label{fig:gam11}
+\end{subfigure}
+\caption{GAM Results}
+\end{figure}
+\FloatBarrier
+
+From the above plots, you can see how the smoothing splines capture the relationship between each predictor and the response. None of the relationships appear particularly linear. 
+
+\item[c./d.]
+<<>>=
+preds=predict(gam2,newdata=College[test,])
+mse = mean((College$Outstate[test]-preds)^2)
+@
+
+With a test MSE of \Sexpr{round(mse,3)}, it seems like this model is not a very good predictor of the response variable. More steps would be needed to cross validate the model against alternative combinations of the variables and their basis functions. 
+
+\end{itemize}
+\end{document}
